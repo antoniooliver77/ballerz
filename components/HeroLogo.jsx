@@ -8,9 +8,11 @@ import { useEffect, useRef } from "react";
  * partículas.
  *
  * Cómo funciona:
- *  0. Un balón gira sobre su eje en un canvas aparte (geometría 3D proyectada a
- *     mano: costuras como aros orientados, sombreado con gradientes). Gira por
- *     tiempo, no por scroll, para que se vea vivo antes de interactuar.
+ *  0. Un balón gira sobre su eje en un canvas aparte: una esfera con textura
+ *     equirectangular de balón real (paneles, costuras y grano de cuero)
+ *     muestreada píxel a píxel con la rotación del momento, más luz difusa,
+ *     borde oscuro y brillo especular. Gira por tiempo, no por scroll, para
+ *     que se vea vivo antes de interactuar.
  *  1. Se carga /logo-512.png en un canvas fuera de pantalla.
  *  2. Se muestrean sus píxeles: cada píxel visible se convierte en una partícula
  *     que guarda su posición final y su color real dentro del escudo.
@@ -176,55 +178,178 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       listo = true;
     }
 
-    /* ---- balón 3D: gira por tiempo mientras no hay scroll ---- */
-    // tres costuras (aros) con normales no alineadas al eje de giro, para que al
-    // rotar sobre Y se vea un patrón cambiante y no un simple anillo fijo.
-    const COSTURAS = [
-      [1, 0.35, 0],
-      [-0.5, 0.35, 0.87],
-      [-0.5, 0.35, -0.87],
-    ].map(([nx, ny, nz]) => {
-      const len = Math.hypot(nx, ny, nz);
-      const n = [nx / len, ny / len, nz / len];
-      const ayuda = Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-      const ux = n[1] * ayuda[2] - n[2] * ayuda[1];
-      const uy = n[2] * ayuda[0] - n[0] * ayuda[2];
-      const uz = n[0] * ayuda[1] - n[1] * ayuda[0];
-      const ul = Math.hypot(ux, uy, uz);
-      const u = [ux / ul, uy / ul, uz / ul];
-      const v = [n[1] * u[2] - n[2] * u[1], n[2] * u[0] - n[0] * u[2], n[0] * u[1] - n[1] * u[0]];
-      const PASOS = 64;
-      const pts = [];
-      for (let i = 0; i <= PASOS; i++) {
-        const t = (i / PASOS) * Math.PI * 2;
-        const c = Math.cos(t);
-        const s = Math.sin(t);
-        pts.push([c * u[0] + s * v[0], c * u[1] + s * v[1], c * u[2] + s * v[2]]);
-      }
-      return pts;
-    });
-
-    // grano de cuero: textura sutil generada una sola vez, aplicada por encima
-    // de la esfera con "multiply" a baja opacidad.
-    let texturaGrano = null;
-    if (bolaCtx) {
-      const off = document.createElement("canvas");
-      off.width = 90;
-      off.height = 90;
-      const octx = off.getContext("2d");
-      for (let i = 0; i < 900; i++) {
-        octx.beginPath();
-        octx.arc(Math.random() * 90, Math.random() * 90, 0.5 + Math.random() * 1.1, 0, Math.PI * 2);
-        octx.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.22)";
-        octx.fill();
-      }
-      texturaGrano = bolaCtx.createPattern(off, "repeat");
-    }
-
+    /* ---- balón 3D texturizado: gira por tiempo mientras no hay scroll ---- */
+    // El patrón real de un balón (la costura ecuatorial, la recta que cruza los
+    // polos y los dos óvalos laterales) se dibuja una sola vez en una textura
+    // equirectangular; cada fotograma se muestrea esa textura píxel a píxel
+    // sobre la esfera con la rotación del momento, más luz difusa fija, borde
+    // oscurecido y brillo especular. Así las costuras giran pegadas a la
+    // superficie en vez de flotar sobre un círculo plano.
+    const TEXW = 1024;
+    const TEXH = 512;
+    let texData = null;
+    let bolaBuf = null;
     let tsBalonInicio = 0;
 
+    if (bolaCtx) {
+      const t = document.createElement("canvas");
+      t.width = TEXW;
+      t.height = TEXH;
+      const tc = t.getContext("2d");
+
+      // cuero naranja
+      tc.fillStyle = "#e97612";
+      tc.fillRect(0, 0, TEXW, TEXH);
+
+      // grano del cuero (más ancho cerca de los polos para compensar el mapeo)
+      for (let i = 0; i < 15000; i++) {
+        const x = Math.random() * TEXW;
+        const y = Math.random() * TEXH;
+        const lat = (y / TEXH - 0.5) * Math.PI;
+        const rx = Math.min(14, (0.6 + Math.random() * 0.9) / Math.max(0.18, Math.cos(lat)));
+        const ry = 0.6 + Math.random() * 0.9;
+        tc.beginPath();
+        tc.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        tc.fillStyle = Math.random() < 0.62 ? "rgba(96,42,10,0.28)" : "rgba(255,186,120,0.16)";
+        tc.fill();
+      }
+
+      // costuras verticales (el aro perpendicular al eje del patrón), con el
+      // grosor compensado hacia los polos para que en la esfera sea constante
+      const meridiano = (cxTex, w, estilo) => {
+        tc.fillStyle = estilo;
+        for (let y = 0; y < TEXH; y++) {
+          const lat = ((y + 0.5) / TEXH - 0.5) * Math.PI;
+          const ww = Math.min(120, w / Math.max(0.1, Math.cos(lat)));
+          tc.fillRect(cxTex - ww / 2, y, ww, 1);
+        }
+      };
+      meridiano(256, 8.5, "rgba(32,15,4,0.45)");
+      meridiano(768, 8.5, "rgba(32,15,4,0.45)");
+      meridiano(256, 5.5, "#200f04");
+      meridiano(768, 5.5, "#200f04");
+
+      // costura horizontal (el gran círculo que contiene el eje del patrón)
+      tc.fillStyle = "rgba(32,15,4,0.45)";
+      tc.fillRect(0, TEXH / 2 - 4.25, TEXW, 8.5);
+      tc.fillStyle = "#200f04";
+      tc.fillRect(0, TEXH / 2 - 2.75, TEXW, 5.5);
+
+      // los dos óvalos laterales: anillos a ~55° de cada polo del patrón
+      tc.lineCap = "round";
+      const anillo = (zSigno, desplazaX) => {
+        const c55 = Math.cos(0.96);
+        const s55 = Math.sin(0.96);
+        let prev = null;
+        for (let i = 0; i <= 180; i++) {
+          const a = (i / 180) * Math.PI * 2;
+          const px = s55 * Math.cos(a);
+          const py = s55 * Math.sin(a);
+          const pz = c55 * zSigno;
+          const lon = Math.atan2(px, pz);
+          const lat = Math.asin(py);
+          const x = (lon / (Math.PI * 2) + 0.5) * TEXW + desplazaX;
+          const y = (lat / Math.PI + 0.5) * TEXH;
+          if (prev && Math.abs(x - prev[0]) < TEXW / 2) {
+            const w = 5.5 / Math.max(0.45, Math.cos(lat));
+            tc.lineWidth = w + 3;
+            tc.strokeStyle = "rgba(32,15,4,0.45)";
+            tc.beginPath();
+            tc.moveTo(prev[0], prev[1]);
+            tc.lineTo(x, y);
+            tc.stroke();
+            tc.lineWidth = w;
+            tc.strokeStyle = "#200f04";
+            tc.beginPath();
+            tc.moveTo(prev[0], prev[1]);
+            tc.lineTo(x, y);
+            tc.stroke();
+          }
+          prev = [x, y];
+        }
+      };
+      anillo(1, 0);
+      anillo(-1, -TEXW);
+      anillo(-1, 0);
+      anillo(-1, TEXW);
+
+      texData = tc.getImageData(0, 0, TEXW, TEXH).data;
+    }
+
+    // tablas por píxel de la esfera: coordenada de textura base, fila, luz y
+    // brillo. Solo dependen del tamaño, así que se recalculan al redimensionar;
+    // por fotograma únicamente cambia el desplazamiento de longitud (el giro).
+    function construirBolaBuf(S) {
+      const lienzo = document.createElement("canvas");
+      lienzo.width = S;
+      lienzo.height = S;
+      const lctx = lienzo.getContext("2d");
+      const imgData = lctx.createImageData(S, S);
+      const d = imgData.data;
+
+      const n = S * S;
+      const idx = new Int32Array(n);
+      const uBase = new Int32Array(n);
+      const texFila = new Int32Array(n);
+      const luzQ = new Uint16Array(n);
+      const espec = new Uint8Array(n);
+
+      // inclinación fija del eje de giro (ligeramente ladeado y hacia cámara)
+      const ax = 0.42;
+      const az = -0.2;
+      const cax = Math.cos(ax);
+      const sax = Math.sin(ax);
+      const caz = Math.cos(az);
+      const saz = Math.sin(az);
+      // luz desde arriba a la izquierda, hacia la cámara (normalizada)
+      const Lx = -0.45;
+      const Ly = -0.5;
+      const Lz = 0.74;
+      const Hx = -0.241;
+      const Hy = -0.268;
+      const Hz = 0.932;
+
+      const mitad = S / 2;
+      let cuenta = 0;
+      for (let y = 0; y < S; y++) {
+        for (let x = 0; x < S; x++) {
+          const fx = (x + 0.5 - mitad) / mitad;
+          const fy = (y + 0.5 - mitad) / mitad;
+          const rr = fx * fx + fy * fy;
+          if (rr > 1) continue;
+          const nz = Math.sqrt(1 - rr);
+          const di = (y * S + x) * 4;
+
+          // borde suave (antialias del contorno)
+          d[di + 3] = Math.round(255 * Math.min(1, ((1 - Math.sqrt(rr)) * mitad) / 1.4));
+
+          // dirección en el marco del balón (deshace la inclinación del eje)
+          const y1 = fy * cax - nz * sax;
+          const z1 = fy * sax + nz * cax;
+          const mx = fx * caz - y1 * saz;
+          const my = fx * saz + y1 * caz;
+          const lon = Math.atan2(mx, z1);
+          const lat = Math.asin(Math.max(-1, Math.min(1, my)));
+          uBase[cuenta] = (Math.round((lon / (Math.PI * 2) + 0.5) * TEXW) + TEXW) & (TEXW - 1);
+          texFila[cuenta] =
+            Math.max(0, Math.min(TEXH - 1, Math.round((lat / Math.PI + 0.5) * TEXH))) * TEXW;
+
+          // iluminación fija en el marco de la cámara
+          const dif = Math.max(0, fx * Lx + fy * Ly + nz * Lz);
+          const limbo = 0.42 + 0.58 * Math.pow(nz, 0.65);
+          luzQ[cuenta] = Math.round(256 * Math.min(1.08, (0.16 + 0.98 * dif) * limbo));
+          const es = fx * Hx + fy * Hy + nz * Hz;
+          espec[cuenta] = es > 0.6 ? Math.round(Math.pow(es, 60) * 150) : 0;
+
+          idx[cuenta] = di;
+          cuenta++;
+        }
+      }
+      bolaBuf = { S, lienzo, lctx, imgData, d, idx, uBase, texFila, luzQ, espec, cuenta };
+    }
+
     function dibujarBalon(ts, salida) {
-      if (!bolaCtx) return;
+      if (!bolaCtx || !texData) return;
       const alpha = 1 - salida;
       bolaCtx.clearRect(0, 0, ancho, alto);
       if (alpha <= 0.002) return;
@@ -232,112 +357,42 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       const entrada = suave(Math.min(1, (ts - tsBalonInicio) / 550));
 
       const movil = ancho < 720;
-      const radioBase = Math.min(ancho, alto) * (movil ? 0.24 : 0.17);
+      const radioBase = Math.min(ancho, alto) * (movil ? 0.26 : 0.19);
       const radio = radioBase * (0.85 + 0.15 * entrada) * (1 + 0.22 * salida);
       const cx = ancho / 2;
       const cy = alto * 0.46;
 
-      const giro = ts * 0.00055;
-      const inclinacion = 0.26;
-      const cosG = Math.cos(giro);
-      const sinG = Math.sin(giro);
-      const cosI = Math.cos(inclinacion);
-      const sinI = Math.sin(inclinacion);
-      const girar = ([x, y, z]) => {
-        const x1 = x * cosG + z * sinG;
-        const z1 = -x * sinG + z * cosG;
-        const y2 = y * cosI - z1 * sinI;
-        const z2 = y * sinI + z1 * cosI;
-        return [x1, y2, z2];
-      };
+      const S = Math.max(96, Math.min(560, Math.round(radioBase * 2 * dpr)));
+      if (!bolaBuf || bolaBuf.S !== S) construirBolaBuf(S);
+
+      // fotograma: muestrear la textura con el giro actual (una vuelta ≈ 5 s)
+      const { d, idx, uBase, texFila, luzQ, espec, cuenta } = bolaBuf;
+      const off = (ts * 0.205) | 0;
+      for (let i = 0; i < cuenta; i++) {
+        const tb = (texFila[i] + ((uBase[i] + off) & (TEXW - 1))) << 2;
+        const luz = luzQ[i];
+        const sp = espec[i];
+        const di = idx[i];
+        d[di] = ((texData[tb] * luz) >> 8) + sp;
+        d[di + 1] = ((texData[tb + 1] * luz) >> 8) + sp;
+        d[di + 2] = ((texData[tb + 2] * luz) >> 8) + ((sp * 3) >> 2);
+      }
+      bolaBuf.lctx.putImageData(bolaBuf.imgData, 0, 0);
 
       bolaCtx.save();
       bolaCtx.globalAlpha = alpha * entrada;
 
       // sombra de contacto
-      const sombraY = cy + radio * 1.12;
+      const sombraY = cy + radio * 1.14;
       const sombra = bolaCtx.createRadialGradient(cx, sombraY, radio * 0.1, cx, sombraY, radio * 0.95);
-      sombra.addColorStop(0, "rgba(0,0,0,0.38)");
+      sombra.addColorStop(0, "rgba(0,0,0,0.4)");
       sombra.addColorStop(1, "rgba(0,0,0,0)");
       bolaCtx.fillStyle = sombra;
       bolaCtx.beginPath();
-      bolaCtx.ellipse(cx, sombraY, radio * 0.92, radio * 0.22, 0, 0, Math.PI * 2);
+      bolaCtx.ellipse(cx, sombraY, radio * 0.9, radio * 0.2, 0, 0, Math.PI * 2);
       bolaCtx.fill();
 
-      // esfera base
-      const grad = bolaCtx.createRadialGradient(
-        cx - radio * 0.35,
-        cy - radio * 0.42,
-        radio * 0.06,
-        cx,
-        cy,
-        radio * 1.04
-      );
-      grad.addColorStop(0, "#ff9a52");
-      grad.addColorStop(0.45, "#f0740f");
-      grad.addColorStop(0.8, "#c85708");
-      grad.addColorStop(1, "#5e2703");
-      bolaCtx.fillStyle = grad;
-      bolaCtx.beginPath();
-      bolaCtx.arc(cx, cy, radio, 0, Math.PI * 2);
-      bolaCtx.fill();
-
-      // grano de cuero
-      if (texturaGrano) {
-        bolaCtx.save();
-        bolaCtx.beginPath();
-        bolaCtx.arc(cx, cy, radio, 0, Math.PI * 2);
-        bolaCtx.clip();
-        bolaCtx.globalCompositeOperation = "multiply";
-        bolaCtx.globalAlpha = alpha * entrada * 0.16;
-        bolaCtx.fillStyle = texturaGrano;
-        bolaCtx.fillRect(cx - radio, cy - radio, radio * 2, radio * 2);
-        bolaCtx.restore();
-      }
-
-      // costuras, solo la mitad que mira a cámara (z >= 0)
-      bolaCtx.strokeStyle = "#241206";
-      bolaCtx.lineWidth = Math.max(1.2, radio * 0.045);
-      bolaCtx.lineCap = "round";
-      bolaCtx.lineJoin = "round";
-      for (const curva of COSTURAS) {
-        let trazando = false;
-        bolaCtx.beginPath();
-        for (const pt of curva) {
-          const [x, y, z] = girar(pt);
-          if (z < 0) {
-            trazando = false;
-            continue;
-          }
-          const sx2 = cx + x * radio;
-          const sy2 = cy + y * radio;
-          if (!trazando) {
-            bolaCtx.moveTo(sx2, sy2);
-            trazando = true;
-          } else {
-            bolaCtx.lineTo(sx2, sy2);
-          }
-        }
-        bolaCtx.stroke();
-      }
-
-      // brillo especular (fijo, como si la luz viniera de arriba a la izquierda)
-      const brillo = bolaCtx.createRadialGradient(
-        cx - radio * 0.34,
-        cy - radio * 0.4,
-        0,
-        cx - radio * 0.34,
-        cy - radio * 0.4,
-        radio * 0.55
-      );
-      brillo.addColorStop(0, "rgba(255,255,255,0.5)");
-      brillo.addColorStop(1, "rgba(255,255,255,0)");
-      bolaCtx.globalCompositeOperation = "lighter";
-      bolaCtx.fillStyle = brillo;
-      bolaCtx.beginPath();
-      bolaCtx.arc(cx, cy, radio, 0, Math.PI * 2);
-      bolaCtx.fill();
-
+      bolaCtx.drawImage(bolaBuf.lienzo, cx - radio, cy - radio, radio * 2, radio * 2);
       bolaCtx.restore();
     }
 
