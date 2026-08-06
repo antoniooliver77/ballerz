@@ -29,6 +29,7 @@ export const metadata = {
     "club de baloncesto Mérida",
     "Ballerz",
     "pruebas de basquetbol Mérida",
+    "basquetbol femenil Mérida",
     "liga meridana de basquetbol",
   ],
   authors: [{ name: SITIO.nombreCompleto }],

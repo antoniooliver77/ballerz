@@ -543,6 +543,128 @@ p {
 
 /* ---------- roster ---------- */
 
+/* ---------- roster en fotos ----------
+   Las fotos son retratos 9:16 con el nombre y el dorsal ya rotulados por el
+   fotógrafo. Se muestran completas (sin recorte) y el pie de foto repite el
+   dato como texto real, para que se lea nítido en pantalla chica y lo indexen
+   los buscadores. */
+
+.rejilla-fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
+  gap: clamp(12px, 1.7vw, 24px);
+}
+@media (max-width: 520px) {
+  .rejilla-fotos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+.foto-jugador {
+  display: block;
+  position: relative;
+}
+.foto-jugador-marco {
+  display: block; /* es un <span>: sin esto, aspect-ratio no se aplica */
+  position: relative;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  background: var(--negro-2);
+  border: 1px solid var(--linea);
+  transition: border-color 0.45s, box-shadow 0.5s, transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.foto-jugador img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.85s cubic-bezier(0.19, 1, 0.22, 1), filter 0.5s;
+}
+/* barrido de color de la marca al pasar el cursor */
+.foto-jugador-marco::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(155deg, rgba(249, 115, 22, 0.4), transparent 58%);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.foto-jugador:hover .foto-jugador-marco,
+.foto-jugador:focus-visible .foto-jugador-marco {
+  border-color: var(--fuego);
+  box-shadow: 0 14px 40px -18px rgba(249, 115, 22, 0.85);
+  transform: translateY(-6px);
+}
+.foto-jugador:hover img,
+.foto-jugador:focus-visible img {
+  transform: scale(1.06);
+  filter: contrast(1.06) saturate(1.1);
+}
+.foto-jugador:hover .foto-jugador-marco::after,
+.foto-jugador:focus-visible .foto-jugador-marco::after {
+  opacity: 1;
+}
+
+.foto-jugador-sinfoto {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: clamp(3.4rem, 8vw, 5.4rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(249, 115, 22, 0.5);
+}
+.foto-jugador-pie {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-top: 13px;
+}
+.foto-jugador-num {
+  font-family: var(--display);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--fuego);
+  flex-shrink: 0;
+}
+.foto-jugador-nombre {
+  font-family: var(--display);
+  font-size: clamp(0.98rem, 1.35vw, 1.22rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--hueso);
+  transition: color 0.35s;
+}
+.foto-jugador:hover .foto-jugador-nombre {
+  color: var(--fuego);
+}
+
+/* encabezado de cada rama del club */
+.rama-cabecera {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin: 0 0 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--linea);
+}
+.rama-cabecera h2 {
+  font-size: clamp(1.9rem, 4.6vw, 3.4rem);
+  line-height: 0.9;
+}
+.rama-cabecera .cuenta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  white-space: nowrap;
+}
+
 .rejilla-jugadores {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
@@ -633,36 +755,76 @@ p {
   z-index: 5;
 }
 
-/* ---------- ficha de jugador ---------- */
+/* ---------- ficha de jugador: el retrato manda ---------- */
 
-.ficha {
+.retrato {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 1px;
-  background: var(--linea);
-  border: 1px solid var(--linea);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(26px, 4.5vw, 64px);
+  align-items: center;
 }
-@media (max-width: 860px) {
-  .ficha {
+@media (max-width: 820px) {
+  .retrato {
     grid-template-columns: 1fr;
+    gap: 30px;
   }
 }
-.ficha-visual {
-  background: var(--negro-2);
-  display: grid;
-  place-items: center;
-  padding: 40px 24px;
-  min-height: 330px;
+.retrato-marco {
   position: relative;
   overflow: hidden;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--negro-2);
+  box-shadow: 0 30px 80px -40px rgba(249, 115, 22, 0.7);
 }
-.ficha-visual .num-grande {
+.retrato-marco img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* resplandor de marca en la esquina superior */
+.retrato-marco::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(158deg, rgba(249, 115, 22, 0.16), transparent 46%);
+}
+.retrato-datos {
+  position: relative;
+}
+/* el dorsal gigante, en contorno, detrás del nombre */
+.retrato-dorsal {
+  position: absolute;
+  top: -0.34em;
+  right: 0;
+  z-index: -1;
   font-family: var(--display);
-  font-size: clamp(9rem, 20vw, 17rem);
-  line-height: 0.8;
+  font-size: clamp(9rem, 21vw, 20rem);
+  line-height: 0.78;
   color: transparent;
-  -webkit-text-stroke: 2px rgba(249, 115, 22, 0.55);
+  -webkit-text-stroke: 2px rgba(249, 115, 22, 0.3);
+  user-select: none;
 }
+.retrato-datos h2 {
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  line-height: 0.86;
+}
+.retrato-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.etiqueta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  border: 1px solid var(--linea-fuerte);
+  padding: 9px 15px;
+}
+
 .ficha-datos {
   background: var(--negro-2);
   padding: clamp(26px, 4vw, 46px);
@@ -796,6 +958,20 @@ p {
   border-color: var(--cromo-2);
   color: var(--cromo-2);
 }
+.etiqueta.es-hoy {
+  background: var(--fuego);
+  border-color: var(--fuego);
+  color: #120a03;
+  font-weight: 700;
+}
+/* el partido de hoy resalta en la lista */
+.partido-hoy {
+  background: linear-gradient(100deg, rgba(249, 115, 22, 0.14), transparent 60%), var(--negro-2);
+  box-shadow: inset 3px 0 0 var(--fuego);
+}
+.partido-hoy:hover {
+  background: linear-gradient(100deg, rgba(249, 115, 22, 0.2), transparent 60%), var(--negro-3);
+}
 .marcador {
   font-family: var(--display);
   font-size: 1.6rem;
@@ -865,6 +1041,48 @@ p {
   place-items: center;
   padding: 34px;
   min-height: 240px;
+}
+/* con foto real, el retrato va a sangre y encuadrado a la cara */
+.coach-visual:has(img) {
+  padding: 0;
+  overflow: hidden;
+}
+.coach-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+}
+@media (max-width: 780px) {
+  .coach-visual:has(img) {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* trayectoria del cuerpo técnico */
+.trayectoria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 22px;
+  list-style: none;
+}
+.trayectoria li {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  border: 1px solid var(--linea-fuerte);
+  padding: 8px 13px;
+}
+.trayectoria-titulo {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--tenue-2);
+  margin-top: 26px;
 }
 .coach-iniciales {
   font-family: var(--display);

@@ -8,7 +8,7 @@ const coach = getHeadCoach();
 
 export const metadata = meta({
   titulo: `Cuerpo técnico — ${coach ? coach.nombre : "Staff"}`,
-  descripcion: `${coach ? `${coach.nombre} es Head Coach de ${SITIO.nombre}` : `Cuerpo técnico de ${SITIO.nombre}`}, club de basquetbol de ${SITIO.ciudad}, ${SITIO.estado}. Conoce al staff que dirige al equipo y su filosofía de juego.`,
+  descripcion: `${coach ? `${coach.nombre} es Head Coach de ${SITIO.nombre}` : `Cuerpo técnico de ${SITIO.nombre}`}, club de basquetbol de ${SITIO.ciudad}, ${SITIO.estado}. Conoce al staff que dirige al equipo.`,
   ruta: "/cuerpo-tecnico",
 });
 
@@ -54,8 +54,21 @@ export default function CuerpoTecnico() {
                 <div className="coach-datos">
                   <p className="coach-cargo">{p.cargo}</p>
                   <h2 style={{ fontSize: "clamp(1.6rem, 3.2vw, 2.6rem)" }}>{p.nombre}</h2>
-                  <p style={{ marginTop: 16, color: "var(--tenue)" }}>{p.bio}</p>
+                  {p.bio &&
+                    p.bio.split("\n\n").map((parrafo, k) => (
+                      <p key={k} style={{ marginTop: 16, color: "var(--tenue)" }}>
+                        {parrafo}
+                      </p>
+                    ))}
                   {p.filosofia && <blockquote className="cita">“{p.filosofia}”</blockquote>}
+                  {p.trayectoria?.length > 0 && (
+                    <>
+                      <p className="trayectoria-titulo">Como jugador</p>
+                      <ul className="trayectoria">
+                        {p.trayectoria.map((eq) => <li key={eq}>{eq}</li>)}
+                      </ul>
+                    </>
+                  )}
                 </div>
               </Aparece>
             ))}
@@ -65,32 +78,11 @@ export default function CuerpoTecnico() {
 
       <section className="seccion">
         <div className="contenedor">
-          <CabeceraSeccion numero="Metodología" titulo="Cómo" contorno="entrenamos" />
-          <div className="rejilla-tarjetas">
-            <Aparece className="tarjeta">
-              <h3>Defensa primero</h3>
-              <p>
-                El sistema arranca en la defensa. Rotaciones, comunicación y esfuerzo
-                sostenido: es lo que se puede controlar todos los días, sin importar si
-                el tiro entra o no.
-              </p>
-            </Aparece>
-            <Aparece retardo={80} className="tarjeta">
-              <h3>Desarrollo individual</h3>
-              <p>
-                Cada jugador tiene objetivos propios de temporada. El trabajo individual
-                antes y después del entrenamiento colectivo es parte del plan, no un extra.
-              </p>
-            </Aparece>
-            <Aparece retardo={160} className="tarjeta">
-              <h3>Lectura de juego</h3>
-              <p>
-                Menos jugadas memorizadas y más principios. Queremos jugadores que
-                entiendan por qué se toma cada decisión en la duela.
-              </p>
-            </Aparece>
-          </div>
-
+          <CabeceraSeccion numero="Pruebas" titulo="Entrena con" contorno="nosotros" />
+          <p className="plomo">
+            El club trabaja las dos ramas, varonil y femenil, en {SITIO.ciudad}. Si
+            quieres sumarte, escríbenos y te decimos cuándo es la siguiente prueba.
+          </p>
           <div className="botones">
             <Link href="/contacto" className="btn btn-fuego"><span>Entrenar con nosotros</span></Link>
             <Link href="/equipo" className="btn btn-linea"><span>Ver el roster</span></Link>

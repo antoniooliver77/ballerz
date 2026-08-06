@@ -19,8 +19,9 @@
     "codigoPostal": "97000"
   },
 
+  "_ayudaContacto": "Cuando tengas el correo real del club, escríbelo en 'correo'. Mientras esté vacío, el sitio manda a la gente por Facebook.",
   "contacto": {
-    "correo": "contacto@ballerz.mx",
+    "correo": "",
     "telefono": "",
     "whatsapp": ""
   },

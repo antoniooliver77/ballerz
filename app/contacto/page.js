@@ -31,9 +31,14 @@ const PREGUNTAS = [
       "Ropa deportiva, tenis de basquetbol o de suela limpia para duela, agua y una identificación. Nada más.",
   },
   {
+    pregunta: "¿El club tiene rama femenil?",
+    respuesta:
+      "Sí. Ballerz compite con rama varonil y rama femenil, y las pruebas están abiertas para las dos.",
+  },
+  {
     pregunta: "¿Hay costo por entrenar con el club?",
     respuesta:
-      "La prueba de ingreso no tiene costo. Si te integras al roster, te explicamos la cuota de temporada, que cubre uso de instalaciones, arbitraje e inscripción a la liga.",
+      "Escríbenos y te explicamos las condiciones de la temporada antes de que decidas nada.",
   },
   {
     pregunta: "¿Dónde entrena Ballerz?",
@@ -43,6 +48,8 @@ const PREGUNTAS = [
 
 export default function Contacto() {
   const asunto = encodeURIComponent(`Quiero entrar a pruebas — ${SITIO.nombre}`);
+  const correo = SITIO.contacto.correo;
+  const facebook = SITIO.redes.facebook;
 
   return (
     <>
@@ -58,13 +65,28 @@ export default function Contacto() {
           <CabeceraSeccion numero="01" titulo="Escríbenos" contorno="directo" />
           <Aparece>
             <p className="plomo" style={{ marginBottom: 30 }}>
-              Mándanos un correo con tu nombre, edad, posición y experiencia. Te
-              respondemos con el día y la hora de la siguiente prueba.
+              {correo
+                ? "Mándanos un mensaje con tu nombre, edad y experiencia. Te respondemos con el día y la hora de la siguiente prueba."
+                : "Escríbenos por Facebook con tu nombre, edad y experiencia, y te respondemos con el día y la hora de la siguiente prueba."}
             </p>
 
+            {!correo && facebook && (
+              <div className="botones" style={{ marginTop: 0, marginBottom: 34 }}>
+                <a
+                  href={facebook}
+                  className="btn btn-fuego"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>Escribirnos por Facebook</span>
+                </a>
+              </div>
+            )}
+
+            {correo && (
             <form
               className="formulario"
-              action={`mailto:${SITIO.contacto.correo}`}
+              action={`mailto:${correo}`}
               method="post"
               encType="text/plain"
             >
@@ -81,15 +103,11 @@ export default function Contacto() {
                 <input id="edad" name="edad" type="number" min="10" max="70" />
               </div>
               <div className="campo">
-                <label htmlFor="posicion">Posición</label>
-                <select id="posicion" name="posicion" defaultValue="">
+                <label htmlFor="rama">Rama</label>
+                <select id="rama" name="rama" defaultValue="">
                   <option value="" disabled>Elige una</option>
-                  <option>Base</option>
-                  <option>Escolta</option>
-                  <option>Alero</option>
-                  <option>Ala-pívot</option>
-                  <option>Pívot</option>
-                  <option>Aún no lo sé</option>
+                  <option>Varonil</option>
+                  <option>Femenil</option>
                 </select>
               </div>
               <div className="campo">
@@ -100,16 +118,16 @@ export default function Contacto() {
                 <button type="submit" className="btn btn-fuego"><span>Enviar solicitud</span></button>
               </div>
             </form>
+            )}
 
-            <p style={{ marginTop: 26, color: "var(--tenue-2)", fontSize: "0.95rem" }}>
-              ¿Prefieres el correo directo?{" "}
-              <a
-                href={`mailto:${SITIO.contacto.correo}?subject=${asunto}`}
-                style={{ color: "var(--fuego)" }}
-              >
-                {SITIO.contacto.correo}
-              </a>
-            </p>
+            {correo && (
+              <p style={{ marginTop: 26, color: "var(--tenue-2)", fontSize: "0.95rem" }}>
+                ¿Prefieres el correo directo?{" "}
+                <a href={`mailto:${correo}?subject=${asunto}`} style={{ color: "var(--fuego)" }}>
+                  {correo}
+                </a>
+              </p>
+            )}
           </Aparece>
         </div>
       </section>
