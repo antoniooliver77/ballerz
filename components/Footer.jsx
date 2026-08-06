@@ -57,6 +57,16 @@ export default function Footer() {
           <span>
             © {anio} {SITIO.nombreCompleto} — {SITIO.ciudad}, {SITIO.estado}
           </span>
+          <span className="pie-credito">
+            Página creada por{" "}
+            <a href="https://oliverbarona.com" target="_blank" rel="noopener noreferrer">
+              Oliver Barona
+            </a>{" "}
+            de{" "}
+            <a href="https://disruptia.org" target="_blank" rel="noopener noreferrer">
+              DIsruptIA
+            </a>
+          </span>
           <span>Hecho en Mérida</span>
         </div>
       </div>

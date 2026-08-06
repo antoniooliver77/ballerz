@@ -1265,6 +1265,21 @@ p {
   flex-wrap: wrap;
   color: var(--tenue-2);
 }
+/* crédito de autoría: sin mayúsculas forzadas, para respetar cómo se escriben
+   el nombre y la marca (DIsruptIA lleva la I intercalada a propósito) */
+.pie-credito {
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+.pie-credito a {
+  color: var(--tenue);
+  border-bottom: 1px solid var(--linea-fuerte);
+  transition: color 0.25s, border-color 0.25s;
+}
+.pie-credito a:hover {
+  color: var(--fuego);
+  border-color: var(--fuego);
+}
 
 /* ---------- animación de entrada ---------- */
 
