@@ -35,7 +35,7 @@ export default function Inicio() {
   // la sección del calendario solo existe si hay partidos reales, así que la
   // numeración de las secciones siguientes se corre para no dejar huecos
   const hayCalendario = proximos.length > 0 || resultados.length > 0;
-  const nBanca = hayCalendario ? "05" : "04";
+  const nBanca = hayCalendario ? "06" : "05";
 
   return (
     <>
@@ -105,11 +105,32 @@ export default function Inicio() {
         </div>
       </section>
 
+      {/* ---------- plantilla completa, en fichas ---------- */}
+      <section className="seccion">
+        <div className="contenedor">
+          <CabeceraSeccion numero="04 / Plantilla" titulo="Todo el" contorno="equipo" />
+          <div className="rejilla-jugadores">
+            {jugadores.map((j, i) => (
+              <Aparece key={j.slug} retardo={Math.min(i * 35, 400)} as="article" className="jugador">
+                <span className="jugador-dorsal" aria-hidden="true">{j.dorsal}</span>
+                <p className="jugador-pos">Rama {j.rama}</p>
+                <h3>{j.nombre}</h3>
+                <Link href={`/equipo/${j.slug}`} className="jugador-enlace">
+                  <span style={{ position: "absolute", left: -9999 }}>
+                    Ver la ficha de {j.nombre}
+                  </span>
+                </Link>
+              </Aparece>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- calendario: solo si hay partidos reales ---------- */}
       {hayCalendario && (
         <section className="seccion">
           <div className="contenedor">
-            <CabeceraSeccion numero="04 / Calendario" titulo="Próximos" contorno="partidos" />
+            <CabeceraSeccion numero="05 / Calendario" titulo="Próximos" contorno="partidos" />
             {proximos.length > 0 && (
               <Aparece className="lista-partidos">
                 {proximos.map((p) => <Partido key={p.fecha + p.rival} p={p} />)}
