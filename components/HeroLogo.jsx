@@ -17,8 +17,9 @@ import { useEffect, useRef } from "react";
  *  2. Se muestrean sus píxeles: cada píxel visible se convierte en una partícula
  *     que guarda su posición final y su color real dentro del escudo.
  *  3. El avance del scroll dentro de la sección (0 a 1) interpola cada partícula
- *     desde una posición dispersa hasta su lugar exacto; los primeros puntos de
- *     scroll también funden el balón hacia afuera y las partículas hacia adentro.
+ *     desde una posición dispersa hasta su lugar exacto; durante la primera
+ *     mitad del recorrido el balón crece hacia cámara y se disuelve mientras
+ *     las partículas aparecen, para que las dos animaciones se solapen.
  *  4. Al final, el escudo real en alta resolución aparece encima para que quede
  *     perfectamente nítido.
  *
@@ -180,7 +181,8 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
 
     /* ---- balón 3D texturizado: gira por tiempo mientras no hay scroll ---- */
     // El patrón real de un balón (la costura ecuatorial, la recta que cruza los
-    // polos y los dos óvalos laterales) se dibuja una sola vez en una textura
+    // polos y las dos costuras curvas que se unen a los costados) se dibuja una
+    // sola vez en una textura
     // equirectangular; cada fotograma se muestrea esa textura píxel a píxel
     // sobre la esfera con la rotación del momento, más luz difusa fija, borde
     // oscurecido y brillo especular. Así las costuras giran pegadas a la
@@ -235,19 +237,22 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       tc.fillStyle = "#200f04";
       tc.fillRect(0, TEXH / 2 - 2.75, TEXW, 5.5);
 
-      // los dos óvalos laterales: anillos a ~55° de cada polo del patrón
+      // las dos costuras curvas: grandes círculos inclinados ±β respecto al
+      // ecuador, que lo cruzan en dos puntos opuestos — ahí es donde las
+      // curvas "se unen" a los costados, como en un balón real
       tc.lineCap = "round";
-      const anillo = (zSigno, desplazaX) => {
-        const c55 = Math.cos(0.96);
-        const s55 = Math.sin(0.96);
+      const curva = (signo, desplazaX) => {
+        const beta = 0.58;
+        const cb = Math.cos(beta);
+        const sb = Math.sin(beta) * signo;
         let prev = null;
-        for (let i = 0; i <= 180; i++) {
-          const a = (i / 180) * Math.PI * 2;
-          const px = s55 * Math.cos(a);
-          const py = s55 * Math.sin(a);
-          const pz = c55 * zSigno;
+        for (let i = 0; i <= 240; i++) {
+          const a = (i / 240) * Math.PI * 2;
+          const px = Math.sin(a) * cb;
+          const py = Math.sin(a) * sb;
+          const pz = Math.cos(a);
           const lon = Math.atan2(px, pz);
-          const lat = Math.asin(py);
+          const lat = Math.asin(Math.max(-1, Math.min(1, py)));
           const x = (lon / (Math.PI * 2) + 0.5) * TEXW + desplazaX;
           const y = (lat / Math.PI + 0.5) * TEXH;
           if (prev && Math.abs(x - prev[0]) < TEXW / 2) {
@@ -268,10 +273,10 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
           prev = [x, y];
         }
       };
-      anillo(1, 0);
-      anillo(-1, -TEXW);
-      anillo(-1, 0);
-      anillo(-1, TEXW);
+      for (const dx of [-TEXW, 0, TEXW]) {
+        curva(1, dx);
+        curva(-1, dx);
+      }
 
       texData = tc.getImageData(0, 0, TEXW, TEXH).data;
     }
@@ -350,7 +355,10 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
 
     function dibujarBalon(ts, salida) {
       if (!bolaCtx || !texData) return;
-      const alpha = 1 - salida;
+      // el balón aguanta opaco el primer tramo de su salida y se disuelve al
+      // final, mientras crece hacia cámara — así acompaña el armado del escudo
+      // en lugar de dejar un hueco vacío
+      const alpha = 1 - suave(Math.min(1, Math.max(0, (salida - 0.3) / 0.7)));
       bolaCtx.clearRect(0, 0, ancho, alto);
       if (alpha <= 0.002) return;
       if (!tsBalonInicio) tsBalonInicio = ts;
@@ -358,11 +366,11 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
 
       const movil = ancho < 720;
       const radioBase = Math.min(ancho, alto) * (movil ? 0.26 : 0.19);
-      const radio = radioBase * (0.85 + 0.15 * entrada) * (1 + 0.22 * salida);
+      const radio = radioBase * (0.85 + 0.15 * entrada) * (1 + 3 * salida);
       const cx = ancho / 2;
       const cy = alto * 0.46;
 
-      const S = Math.max(96, Math.min(560, Math.round(radioBase * 2 * dpr)));
+      const S = Math.max(96, Math.min(640, Math.round(radioBase * 2.5 * dpr)));
       if (!bolaBuf || bolaBuf.S !== S) construirBolaBuf(S);
 
       // fotograma: muestrear la textura con el giro actual (una vuelta ≈ 5 s)
@@ -380,9 +388,10 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       bolaBuf.lctx.putImageData(bolaBuf.imgData, 0, 0);
 
       bolaCtx.save();
-      bolaCtx.globalAlpha = alpha * entrada;
 
-      // sombra de contacto
+      // sombra de contacto (se va antes que el balón, para que al crecer no
+      // arrastre una elipse gigante por la parte baja)
+      bolaCtx.globalAlpha = alpha * entrada * (1 - salida);
       const sombraY = cy + radio * 1.14;
       const sombra = bolaCtx.createRadialGradient(cx, sombraY, radio * 0.1, cx, sombraY, radio * 0.95);
       sombra.addColorStop(0, "rgba(0,0,0,0.4)");
@@ -392,6 +401,7 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       bolaCtx.ellipse(cx, sombraY, radio * 0.9, radio * 0.2, 0, 0, Math.PI * 2);
       bolaCtx.fill();
 
+      bolaCtx.globalAlpha = alpha * entrada;
       bolaCtx.drawImage(bolaBuf.lienzo, cx - radio, cy - radio, radio * 2, radio * 2);
       bolaCtx.restore();
     }
@@ -399,7 +409,7 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
     /* ---- bucle de dibujo ---- */
     const suave = (t) => t * t * (3 - 2 * t);
     let pSuave = 0;
-    const FIN_BALON = 0.16; // fracción del scroll en la que el balón ya cedió el paso del todo
+    const FIN_BALON = 0.55; // fracción del scroll en la que el balón ya cedió el paso del todo
 
     function dibujar(ts) {
       if (!vivo) return;
