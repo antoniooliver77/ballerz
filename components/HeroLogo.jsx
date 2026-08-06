@@ -180,8 +180,8 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
     }
 
     /* ---- balón 3D texturizado: gira por tiempo mientras no hay scroll ---- */
-    // El patrón real de un balón (cuatro círculos: la costura central, dos
-    // paralelas a distancia constante y el aro perpendicular) se dibuja una
+    // El patrón icónico de un balón (4 meridianos de polo a polo más el
+    // ecuador, el clásico de los dibujos de balones) se dibuja una
     // sola vez en una textura
     // equirectangular; cada fotograma se muestrea esa textura píxel a píxel
     // sobre la esfera con la rotación del momento, más luz difusa fija, borde
@@ -216,32 +216,24 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
         tc.fill();
       }
 
-      // costuras: el patrón real de un balón son cuatro círculos — la costura
-      // central, dos círculos PARALELOS a ella a distancia constante (por eso
-      // los gajos del centro son bandas iguales, y al envolver los polos forman
-      // las puntas redondeadas) y el aro perpendicular. El patrón completo va
-      // girado un ángulo fijo respecto al eje de giro para que ninguna costura
-      // quede quieta cuando el balón rota.
+      // costuras: patrón icónico de balón — 4 meridianos de polo a polo (8
+      // gajos, cada 45°) más el ecuador. De frente se ve la línea vertical con
+      // paréntesis a los lados y la horizontal; hacia el polo los gajos
+      // convergen en un punto, como en un balón clásico.
       tc.lineCap = "round";
       tc.lineJoin = "round";
-      const DELTA = 0.4; // separación angular de las costuras paralelas (~23°)
-      const ROTPAT = 0.6; // giro fijo del patrón respecto al eje de rotación
-      const cRp = Math.cos(ROTPAT);
-      const sRp = Math.sin(ROTPAT);
       const trazarCirculo = (fn, anchoTrazo, estilo) => {
         tc.strokeStyle = estilo;
         for (const desplazaX of [-TEXW, 0, TEXW]) {
           let prev = null;
           for (let i = 0; i <= 240; i++) {
-            const [x0, y0, z0] = fn((i / 240) * Math.PI * 2);
-            const px = x0 * cRp - y0 * sRp;
-            const py = x0 * sRp + y0 * cRp;
-            const lon = Math.atan2(px, z0);
+            const [px, py, pz] = fn((i / 240) * Math.PI * 2);
+            const lon = Math.atan2(px, pz);
             const lat = Math.asin(Math.max(-1, Math.min(1, py)));
             const x = (lon / (Math.PI * 2) + 0.5) * TEXW + desplazaX;
             const y = (lat / Math.PI + 0.5) * TEXH;
             if (prev && Math.abs(x - prev[0]) < TEXW / 2) {
-              tc.lineWidth = Math.min(60, anchoTrazo / Math.max(0.12, Math.cos(lat)));
+              tc.lineWidth = anchoTrazo / Math.max(0.5, Math.cos(lat));
               tc.beginPath();
               tc.moveTo(prev[0], prev[1]);
               tc.lineTo(x, y);
@@ -251,16 +243,15 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
           }
         }
       };
-      const cdl = Math.cos(DELTA);
-      const sdl = Math.sin(DELTA);
-      const CIRCULOS = [
-        (l) => [Math.sin(l), 0, Math.cos(l)], // costura central
-        (l) => [cdl * Math.sin(l), sdl, cdl * Math.cos(l)], // paralela superior
-        (l) => [cdl * Math.sin(l), -sdl, cdl * Math.cos(l)], // paralela inferior
-        (t) => [0, Math.sin(t), Math.cos(t)], // aro perpendicular
-      ];
-      for (const c of CIRCULOS) trazarCirculo(c, 13, "rgba(40,19,6,0.35)");
-      for (const c of CIRCULOS) trazarCirculo(c, 8, "#1e0e04");
+      const CIRCULOS = [];
+      for (let k = 0; k < 4; k++) {
+        const sL = Math.sin((k * Math.PI) / 4);
+        const cL = Math.cos((k * Math.PI) / 4);
+        CIRCULOS.push((t) => [Math.sin(t) * sL, Math.cos(t), Math.sin(t) * cL]);
+      }
+      CIRCULOS.push((t) => [Math.sin(t), 0, Math.cos(t)]); // ecuador
+      for (const c of CIRCULOS) trazarCirculo(c, 15, "rgba(40,19,6,0.35)");
+      for (const c of CIRCULOS) trazarCirculo(c, 9, "#1e0e04");
 
       texData = tc.getImageData(0, 0, TEXW, TEXH).data;
     }
@@ -284,7 +275,7 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
       const espec = new Uint8Array(n);
 
       // inclinación fija del eje de giro (ligeramente ladeado y hacia cámara)
-      const ax = 0.42;
+      const ax = 0.35;
       const az = -0.2;
       const cax = Math.cos(ax);
       const sax = Math.sin(ax);
