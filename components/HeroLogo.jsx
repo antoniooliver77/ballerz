@@ -180,9 +180,9 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
     }
 
     /* ---- balón 3D texturizado: gira por tiempo mientras no hay scroll ---- */
-    // El patrón real de un balón (la costura recta central, el aro vertical y
-    // los dos lazos con puntas en U que corren paralelos formando bandas
-    // uniformes) se dibuja una sola vez en una textura
+    // El patrón real de un balón (cuatro círculos: la costura central, dos
+    // paralelas a distancia constante y el aro perpendicular) se dibuja una
+    // sola vez en una textura
     // equirectangular; cada fotograma se muestrea esa textura píxel a píxel
     // sobre la esfera con la rotación del momento, más luz difusa fija, borde
     // oscurecido y brillo especular. Así las costuras giran pegadas a la
@@ -216,90 +216,51 @@ export default function HeroLogo({ nombre, lema, datos = [] }) {
         tc.fill();
       }
 
-      // costura vertical: el aro que pasa por arriba, abajo y los dos frentes
-      // del patrón, con el grosor compensado hacia los polos de la textura
-      const meridiano = (cxTex, w, estilo) => {
-        tc.fillStyle = estilo;
-        for (let y = 0; y < TEXH; y++) {
-          const lat = ((y + 0.5) / TEXH - 0.5) * Math.PI;
-          const ww = Math.min(120, w / Math.max(0.1, Math.cos(lat)));
-          tc.fillRect(cxTex - ww / 2, y, ww, 1);
-        }
-      };
-      meridiano(0, 8.5, "rgba(32,15,4,0.45)");
-      meridiano(512, 8.5, "rgba(32,15,4,0.45)");
-      meridiano(1024, 8.5, "rgba(32,15,4,0.45)");
-      meridiano(0, 5.5, "#200f04");
-      meridiano(512, 5.5, "#200f04");
-      meridiano(1024, 5.5, "#200f04");
-
-      // costura horizontal (el gran círculo que contiene el eje del patrón)
-      tc.fillStyle = "rgba(32,15,4,0.45)";
-      tc.fillRect(0, TEXH / 2 - 4.25, TEXW, 8.5);
-      tc.fillStyle = "#200f04";
-      tc.fillRect(0, TEXH / 2 - 2.75, TEXW, 5.5);
-
-      // las dos costuras curvas: cada una es un lazo cerrado que corre paralelo
-      // a la costura recta central (así los gajos del centro quedan como bandas
-      // de ancho uniforme) y remata en las puntas con una vuelta en U
-      // redondeada cerca de cada polo del patrón, como en un balón real
+      // costuras: el patrón real de un balón son cuatro círculos — la costura
+      // central, dos círculos PARALELOS a ella a distancia constante (por eso
+      // los gajos del centro son bandas iguales, y al envolver los polos forman
+      // las puntas redondeadas) y el aro perpendicular. El patrón completo va
+      // girado un ángulo fijo respecto al eje de giro para que ninguna costura
+      // quede quieta cuando el balón rota.
       tc.lineCap = "round";
       tc.lineJoin = "round";
-      const DELTA = 0.35; // separación angular de la banda (~20°)
-      const LAMBDA = 1.082; // medio largo del tramo recto (~62°)
+      const DELTA = 0.4; // separación angular de las costuras paralelas (~23°)
+      const ROTPAT = 0.6; // giro fijo del patrón respecto al eje de rotación
+      const cRp = Math.cos(ROTPAT);
+      const sRp = Math.sin(ROTPAT);
+      const trazarCirculo = (fn, anchoTrazo, estilo) => {
+        tc.strokeStyle = estilo;
+        for (const desplazaX of [-TEXW, 0, TEXW]) {
+          let prev = null;
+          for (let i = 0; i <= 240; i++) {
+            const [x0, y0, z0] = fn((i / 240) * Math.PI * 2);
+            const px = x0 * cRp - y0 * sRp;
+            const py = x0 * sRp + y0 * cRp;
+            const lon = Math.atan2(px, z0);
+            const lat = Math.asin(Math.max(-1, Math.min(1, py)));
+            const x = (lon / (Math.PI * 2) + 0.5) * TEXW + desplazaX;
+            const y = (lat / Math.PI + 0.5) * TEXH;
+            if (prev && Math.abs(x - prev[0]) < TEXW / 2) {
+              tc.lineWidth = Math.min(60, anchoTrazo / Math.max(0.12, Math.cos(lat)));
+              tc.beginPath();
+              tc.moveTo(prev[0], prev[1]);
+              tc.lineTo(x, y);
+              tc.stroke();
+            }
+            prev = [x, y];
+          }
+        }
+      };
       const cdl = Math.cos(DELTA);
       const sdl = Math.sin(DELTA);
-      const puntoTex = (px, py, pz, desplazaX) => {
-        const lon = Math.atan2(px, pz);
-        const lat = Math.asin(Math.max(-1, Math.min(1, py)));
-        return [(lon / (Math.PI * 2) + 0.5) * TEXW + desplazaX, (lat / Math.PI + 0.5) * TEXH];
-      };
-      const trazar = (pts) => {
-        tc.lineWidth = 9;
-        tc.strokeStyle = "rgba(32,15,4,0.45)";
-        tc.beginPath();
-        pts.forEach(([x, y], i) => (i ? tc.lineTo(x, y) : tc.moveTo(x, y)));
-        tc.stroke();
-        tc.lineWidth = 5.5;
-        tc.strokeStyle = "#200f04";
-        tc.beginPath();
-        pts.forEach(([x, y], i) => (i ? tc.lineTo(x, y) : tc.moveTo(x, y)));
-        tc.stroke();
-      };
-      const lazo = (desplazaX) => {
-        const pts = [];
-        // rama superior, paralela a la costura recta
-        for (let i = 0; i <= 60; i++) {
-          const l = -LAMBDA + (i / 60) * 2 * LAMBDA;
-          pts.push(puntoTex(cdl * Math.sin(l), sdl, cdl * Math.cos(l), desplazaX));
-        }
-        // vuelta en U alrededor del extremo del tramo (la "punta" con forma)
-        const punta = (dir, desdePhi, hastaPhi) => {
-          const ex = Math.sin(LAMBDA) * dir;
-          const ez = Math.cos(LAMBDA);
-          const tx2 = Math.cos(LAMBDA) * dir;
-          const tz2 = -Math.sin(LAMBDA) * dir;
-          for (let i = 0; i <= 30; i++) {
-            const phi = desdePhi + (i / 30) * (hastaPhi - desdePhi);
-            const cph = Math.cos(phi);
-            const sph = Math.sin(phi);
-            pts.push(
-              puntoTex(cdl * ex + sdl * cph * tx2, sdl * sph, cdl * ez + sdl * cph * tz2, desplazaX)
-            );
-          }
-        };
-        punta(1, Math.PI / 2, -Math.PI / 2);
-        // rama inferior, de regreso
-        for (let i = 0; i <= 60; i++) {
-          const l = LAMBDA - (i / 60) * 2 * LAMBDA;
-          pts.push(puntoTex(cdl * Math.sin(l), -sdl, cdl * Math.cos(l), desplazaX));
-        }
-        punta(-1, -Math.PI / 2, Math.PI / 2);
-        trazar(pts);
-      };
-      lazo(0); // lazo frontal, centrado en el frente del patrón
-      lazo(-TEXW / 2); // lazo trasero (dos copias para cubrir el empalme)
-      lazo(TEXW / 2);
+      const CIRCULOS = [
+        (l) => [Math.sin(l), 0, Math.cos(l)], // costura central
+        (l) => [cdl * Math.sin(l), sdl, cdl * Math.cos(l)], // paralela superior
+        (l) => [cdl * Math.sin(l), -sdl, cdl * Math.cos(l)], // paralela inferior
+        (t) => [0, Math.sin(t), Math.cos(t)], // aro perpendicular
+      ];
+      for (const c of CIRCULOS) trazarCirculo(c, 13, "rgba(40,19,6,0.35)");
+      for (const c of CIRCULOS) trazarCirculo(c, 8, "#1e0e04");
 
       texData = tc.getImageData(0, 0, TEXW, TEXH).data;
     }
