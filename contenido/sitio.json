@@ -1,0 +1,40 @@
+{
+  "_ayuda": "Datos generales del club. Si cambias algo aquí, cambia en TODO el sitio. Respeta las comillas y las comas.",
+
+  "nombre": "Ballerz",
+  "nombreCompleto": "Ballerz Basketball Club",
+  "lema": "Nacidos en Mérida. Hechos en la duela.",
+  "descripcionCorta": "Club de basquetbol de Mérida, Yucatán. Formación, competencia y comunidad.",
+  "descripcionLarga": "Ballerz es un club de basquetbol con sede en Mérida, Yucatán. Entrenamos jugadores dentro y fuera de la duela, competimos en la liga local y abrimos la puerta a cualquiera que quiera crecer en este deporte, sin importar el nivel con el que llegue.",
+
+  "ciudad": "Mérida",
+  "estado": "Yucatán",
+  "pais": "México",
+  "codigoPais": "MX",
+  "fundacion": "2025",
+
+  "sede": {
+    "nombre": "Sede por confirmar",
+    "direccion": "Mérida, Yucatán",
+    "codigoPostal": "97000"
+  },
+
+  "contacto": {
+    "correo": "contacto@ballerz.mx",
+    "telefono": "",
+    "whatsapp": ""
+  },
+
+  "redes": {
+    "facebook": "https://www.facebook.com/profile.php?id=61581285635289",
+    "instagram": "",
+    "tiktok": "",
+    "youtube": ""
+  },
+
+  "colores": {
+    "primario": "#F97316",
+    "secundario": "#FFB020",
+    "acento": "#E9E9EC"
+  }
+}

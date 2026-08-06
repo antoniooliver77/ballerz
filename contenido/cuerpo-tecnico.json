@@ -1,0 +1,18 @@
+{
+  "_ayuda": [
+    "CUERPO TÉCNICO. Mismo formato que el roster.",
+    "slug -> dirección web, minúsculas y con guiones",
+    "foto -> nombre del archivo dentro de public/staff/. Déjalo vacío si no hay foto."
+  ],
+
+  "staff": [
+    {
+      "slug": "mauricio-marin",
+      "nombre": "Mauricio Marín",
+      "cargo": "Head Coach",
+      "foto": "",
+      "bio": "Head Coach y responsable del proyecto deportivo de Ballerz. Dirige la planeación de la temporada, el sistema de juego y el desarrollo individual de cada jugador del roster.",
+      "filosofia": "Defensa primero, decisiones rápidas y un equipo que se sostiene solo cuando el partido se pone incómodo."
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "_ayuda": [
+    "ESTE ES EL ARCHIVO DEL CALENDARIO. Puedes editarlo sin saber programar.",
+    "",
+    "Cada partido va entre llaves { } y se separa del siguiente con una coma.",
+    "El ÚLTIMO partido de la lista NO lleva coma al final.",
+    "",
+    "fecha      -> siempre en formato AAAA-MM-DD (año-mes-día). Ejemplo: 2026-09-14",
+    "hora       -> siempre en formato de 24 horas HH:MM. Ejemplo: 20:30",
+    "rival      -> el nombre del equipo contrario",
+    "local      -> true si jugamos en casa, false si jugamos de visita",
+    "sede       -> dónde se juega",
+    "torneo     -> nombre de la liga o torneo",
+    "jornada    -> número o nombre de la jornada",
+    "estado     -> escribe: programado, finalizado o cancelado",
+    "marcador   -> solo si el estado es finalizado. Ejemplo: { \"ballerz\": 88, \"rival\": 74 }",
+    "",
+    "Los partidos se ordenan solos por fecha. No te preocupes por el orden.",
+    "Después de guardar, sube el archivo y el sitio se actualiza."
+  ],
+
+  "partidos": [
+    {
+      "fecha": "2026-08-16",
+      "hora": "20:00",
+      "rival": "Halcones",
+      "local": true,
+      "sede": "Gimnasio Polifuncional, Mérida",
+      "torneo": "Liga Meridana de Basquetbol",
+      "jornada": "1",
+      "estado": "programado",
+      "marcador": null
+    },
+    {
+      "fecha": "2026-08-23",
+      "hora": "19:00",
+      "rival": "Tiburones",
+      "local": false,
+      "sede": "Deportivo Kukulcán, Mérida",
+      "torneo": "Liga Meridana de Basquetbol",
+      "jornada": "2",
+      "estado": "programado",
+      "marcador": null
+    },
+    {
+      "fecha": "2026-08-30",
+      "hora": "20:30",
+      "rival": "Venados BC",
+      "local": true,
+      "sede": "Gimnasio Polifuncional, Mérida",
+      "torneo": "Liga Meridana de Basquetbol",
+      "jornada": "3",
+      "estado": "programado",
+      "marcador": null
+    },
+    {
+      "fecha": "2026-09-06",
+      "hora": "18:00",
+      "rival": "Jaguares",
+      "local": false,
+      "sede": "Unidad Deportiva Inalámbrica, Mérida",
+      "torneo": "Liga Meridana de Basquetbol",
+      "jornada": "4",
+      "estado": "programado",
+      "marcador": null
+    },
+    {
+      "fecha": "2026-07-26",
+      "hora": "20:00",
+      "rival": "Cardenales",
+      "local": true,
+      "sede": "Gimnasio Polifuncional, Mérida",
+      "torneo": "Pretemporada",
+      "jornada": "Amistoso",
+      "estado": "finalizado",
+      "marcador": { "ballerz": 91, "rival": 78 }
+    },
+    {
+      "fecha": "2026-07-19",
+      "hora": "19:30",
+      "rival": "Leones de Kanasín",
+      "local": false,
+      "sede": "Kanasín, Yucatán",
+      "torneo": "Pretemporada",
+      "jornada": "Amistoso",
+      "estado": "finalizado",
+      "marcador": { "ballerz": 82, "rival": 85 }
+    }
+  ]
+}

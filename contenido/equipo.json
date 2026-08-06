@@ -1,0 +1,118 @@
+{
+  "_ayuda": [
+    "ROSTER DE JUGADORES. Cada jugador genera su propia página en el sitio.",
+    "",
+    "slug      -> la dirección web del jugador, en minúsculas y con guiones. Ejemplo: emilio-cruz",
+    "nombre    -> nombre completo",
+    "dorsal    -> número de camiseta, entre comillas. Ejemplo: \"23\"",
+    "posicion  -> Base, Escolta, Alero, Ala-pívot o Pívot",
+    "estatura  -> ejemplo: 1.88 m",
+    "edad      -> número",
+    "origen    -> ciudad de origen",
+    "foto      -> nombre del archivo dentro de la carpeta public/jugadores/. Déjalo vacío si no hay foto.",
+    "bio       -> uno o dos párrafos sobre el jugador",
+    "estadisticas -> promedios de la temporada",
+    "",
+    "Para borrar un jugador, elimina su bloque completo { ... } y la coma que lo separa.",
+    "Los datos de abajo son de ejemplo: reemplázalos por los reales."
+  ],
+
+  "jugadores": [
+    {
+      "slug": "emilio-cruz",
+      "nombre": "Emilio Cruz",
+      "dorsal": "00",
+      "posicion": "Base",
+      "estatura": "1.82 m",
+      "edad": 24,
+      "origen": "Mérida, Yucatán",
+      "foto": "",
+      "bio": "Base titular y voz del equipo en la duela. Lee el juego antes de que pase y castiga cualquier descuido en la transición.",
+      "estadisticas": { "puntos": 18.4, "rebotes": 4.1, "asistencias": 7.2 }
+    },
+    {
+      "slug": "tavo-ramirez",
+      "nombre": "Tavo Ramírez",
+      "dorsal": "07",
+      "posicion": "Escolta",
+      "estatura": "1.90 m",
+      "edad": 22,
+      "origen": "Progreso, Yucatán",
+      "foto": "",
+      "bio": "El anotador del roster. Tiene rango ilimitado desde el perímetro y no le pesa el reloj cuando el partido se cierra.",
+      "estadisticas": { "puntos": 21.9, "rebotes": 3.6, "asistencias": 2.4 }
+    },
+    {
+      "slug": "ilya-petrov",
+      "nombre": "Ilya Petrov",
+      "dorsal": "14",
+      "posicion": "Alero",
+      "estatura": "1.98 m",
+      "edad": 26,
+      "origen": "Mérida, Yucatán",
+      "foto": "",
+      "bio": "Alero de dos vías. Defiende las cuatro posiciones exteriores y sostiene al equipo cuando el ataque se atora.",
+      "estadisticas": { "puntos": 16.2, "rebotes": 7.8, "asistencias": 3.1 }
+    },
+    {
+      "slug": "marcus-hale",
+      "nombre": "Marcus Hale",
+      "dorsal": "23",
+      "posicion": "Ala-pívot",
+      "estatura": "2.02 m",
+      "edad": 27,
+      "origen": "Cancún, Quintana Roo",
+      "foto": "",
+      "bio": "Domina la pintura sin perder el tiro de media distancia. El rebote ofensivo es su firma.",
+      "estadisticas": { "puntos": 14.7, "rebotes": 9.3, "asistencias": 1.8 }
+    },
+    {
+      "slug": "bruno-salas",
+      "nombre": "Bruno Salas",
+      "dorsal": "44",
+      "posicion": "Pívot",
+      "estatura": "2.06 m",
+      "edad": 25,
+      "origen": "Campeche, Campeche",
+      "foto": "",
+      "bio": "Ancla defensiva. Cambia cualquier tiro que entre a la pintura y abre el bloqueo directo para los bases.",
+      "estadisticas": { "puntos": 12.5, "rebotes": 11.6, "asistencias": 1.2 }
+    },
+    {
+      "slug": "didac-ferrer",
+      "nombre": "Dídac Ferrer",
+      "dorsal": "88",
+      "posicion": "Escolta",
+      "estatura": "1.86 m",
+      "edad": 21,
+      "origen": "Mérida, Yucatán",
+      "foto": "",
+      "bio": "Sexto hombre. Entra a cambiar el ritmo del partido y a subir la intensidad defensiva desde el primer segundo.",
+      "estadisticas": { "puntos": 11.1, "rebotes": 2.9, "asistencias": 3.4 }
+    },
+    {
+      "slug": "nico-aguilar",
+      "nombre": "Nico Aguilar",
+      "dorsal": "05",
+      "posicion": "Base",
+      "estatura": "1.79 m",
+      "edad": 20,
+      "origen": "Umán, Yucatán",
+      "foto": "",
+      "bio": "Base joven formado en las categorías inferiores del club. Rápido, aguerrido y con una mejora constante en el tiro exterior.",
+      "estadisticas": { "puntos": 9.8, "rebotes": 2.4, "asistencias": 5.0 }
+    },
+    {
+      "slug": "omar-renteria",
+      "nombre": "Omar Rentería",
+      "dorsal": "31",
+      "posicion": "Alero",
+      "estatura": "1.94 m",
+      "edad": 23,
+      "origen": "Valladolid, Yucatán",
+      "foto": "",
+      "bio": "Alero atlético, especialista en cortes al aro y contragolpe. Uno de los mejores finalizadores del roster.",
+      "estadisticas": { "puntos": 13.3, "rebotes": 5.1, "asistencias": 2.0 }
+    }
+  ]
+}
